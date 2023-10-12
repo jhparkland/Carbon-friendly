@@ -1,0 +1,22 @@
+할일
+1. 소프 발표자료
+2. 딥러닝 모델 및 데이터셋 확보(이수원)
+3. ICTC 2023
+4. 전력과 딥러닝 모델 관련연구
+5. 컴퓨팅사고SW
+6. 스터디 자료 만들기
+
+공통 : 
+requriement.txt 보고 conda에 패키지들 다 설치하면 됨.
+gpu 제품명만 기록 해놓으셈.
+
+DL Model, Dataset
+1. (ResNet) CIFAR-10
+
+2. (BERT) wiki text2
+
+3. (VGGNet) ImageNet
+Dataset : https://www.kaggle.com/competitions/imagenet-object-localization-challenge/data
+참고 블로그 : https://minjoos.tistory.com/6
+설명 : 
+n01440764 같은 건 특정 카테고리(class)별로 모아놓은 이미지 폴더임. LOC_synset_mapping.txt 파일은 저런 카테고리 정보를 매핑해놓은 건데 클래스 이름이 여러개인 경우가 있어서, 내가 준 git 프로젝트 내에 imagenet_class_index.json 파일로 class 정보 사용하도록 해놓음. training.py 코드만 실행하면 실행하면 되고 안되면 나한테 말하셈.
