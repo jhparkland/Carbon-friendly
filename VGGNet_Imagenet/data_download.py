@@ -16,19 +16,19 @@ def download_imagenet(root='D:'):
 
     # make url
     train_url = 'https://image-net.org/data/ILSVRC/2012/ILSVRC2012_img_train.tar'
-    val_url = 'http://www.image-net.org/challenges/LSVRC/ILSVRC2012_img_val.tar'
-    devkit_url = 'http://www.image-net.org/challenges/LSVRC/2012/ILSVRC2012_devkit_t12.tar.gz'
+    val_url = 'http://www.image-net.org/data/ILSVRC/2012/ILSVRC2012_img_val.tar'
+    devkit_url = 'http://www.image-net.org/data/ILSVRC/2012/ILSVRC2012_devkit_t12.tar.gz'
 
     
-    root = root + "/data/"
+    root = root + "/data_sample/"
     os.makedirs(root, exist_ok=True)
     os.chdir(root)
     print("Download at", root, "...")
-    wget.download(url=train_url, out=root, bar=bar_custom)
+    # wget.download(url=train_url, out=root, bar=bar_custom)
     # print('')
     # wget.download(url=val_url, out=root, bar=bar_custom)
     # print('')
-    # wget.download(url=devkit_url, out=root, bar=bar_custom)
+    wget.download(url=devkit_url, out=root, bar=bar_custom)
     print('')
     print('done!')
 

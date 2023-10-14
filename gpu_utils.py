@@ -1,18 +1,14 @@
-import pynvml
 import time
-import atexit
 import subprocess
 import pandas as pd
+
 
 class Check_GPU:
     def __init__(self) -> None:
         # !!!!!!!!!!! Need to Change !!!!!!!!!!!!!!!!!!!!!!!!!!
         # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         # undervolting clock rate
-        self.under_volting_rate = 0.8
-
-        # measurement interval (unit : second)
-        self.time_interval = 0.1    # 100ms
+        self.under_volting_rate = 1.0
 
         # DL model name
         self.dl_model = 'VGGNet_imagenet'
@@ -21,10 +17,6 @@ class Check_GPU:
 
         # GPU device ID 
         self.gpu_id = 0
-
-        # get GPU handle
-        pynvml.nvmlInit()
-        self.handle = pynvml.nvmlDeviceGetHandleByIndex(self.gpu_id)
 
         # idle gpu power
         self.default_gpu_usage = None
@@ -71,19 +63,23 @@ class Check_GPU:
         except Exception:
             self.df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
 
-        # iter_start terminate시 iter_end 실행
-        atexit.register(self.reset_gpu_core_clock)
 
     # GPU 전력 사용량 측정 함수
     def get_gpu_usage(self):
-        usage = pynvml.nvmlDeviceGetPowerUsage(self.handle) / 1000000.0     # unit: kW
-        if self.default_gpu_usage != None:
-            usage = usage - self.default_gpu_usage
+        # nvidia-smi command
+        command = f"nvidia-smi --id {self.gpu_id} --query-gpu=power.draw --format=csv,noheader,nounits"
+        result = subprocess.check_output(command, shell=True, universal_newlines=True)
+
+        # result parsing
+        power_draw = float(result.strip()) / 1000.0  # Convert to kW
+
+        if self.default_gpu_usage is not None:
+            power_draw -= self.default_gpu_usage
         
-        if usage > 0: 
-            return usage
+        if power_draw > 0: 
+            return power_draw
         else:
-            return 0
+            return 0.0
 
 
     # GPU 이름 가져오기
@@ -95,8 +91,6 @@ class Check_GPU:
 
             # 결과 파싱
             lines = result.strip().split('\n')
-            if len(lines) != 1:
-                raise Exception("Unexpected output format")
 
             gpu_name, memory_total = lines[0].strip().split(',')
             
@@ -201,9 +195,6 @@ class Check_GPU:
 
             # 결과 파싱
             lines = result.strip().split('\n')
-            if len(lines) != 1:
-                raise Exception("Unexpected output format")
-            
             memory_clock, core_clock = map(int, lines[0].strip().split(','))
 
             return {
@@ -223,21 +214,23 @@ class Check_GPU:
         self.batch_size = b_size
             
         # variable value initailization for current iteration
-        self.iter_execution_time = 0.0
+        self.iter_execution_time = time.time()
         self.iter_energy_usage = 0.0
         self.core_freq = 0
         # self.opt_core_freq = 0
         self.stop = False
         
+        prev_time = 0
+        # 1 while := 0.015s
         while not self.stop:
+            cur_time = time.time()
+            exec_time = cur_time - prev_time
             # kW * (second / 3600) -> kWh
-            self.iter_energy_usage += self.get_gpu_usage() * (self.time_interval / 3600.0)
-            self.iter_execution_time += self.time_interval
-            freq_info = self.get_gpu_freq_info()
-            self.core_freq = max(self.core_freq, freq_info['CoreClock'])
+            self.iter_energy_usage += self.get_gpu_usage() * (exec_time / 3600.0)
             
-            # stop measurement during measurement interval
-            time.sleep(self.time_interval)
+            prev_time = cur_time
+            
+            
 
         
         
@@ -247,8 +240,11 @@ class Check_GPU:
         # timestamp
         self.stop = True
         timestamp = time.strftime('%Y-%m-%d %I:%M:%S %p', time.localtime(time.time()))
+        self.iter_execution_time = time.time() - self.iter_execution_time
         self.total_excution_time += self.iter_execution_time
         self.total_energy_usage += self.iter_energy_usage
+        freq_info = self.get_gpu_freq_info()
+        self.core_freq = max(self.core_freq, freq_info['CoreClock'])
 
         row = {'DeviceID': self.device_info['GPU Name'],
             'DLmodel': self.dl_model,
@@ -272,4 +268,5 @@ class Check_GPU:
 
     def save_csv(self):
         self.df.to_csv('measurement.csv', index=False)
+        print('measurement saved into measurement.csv ...')
 
