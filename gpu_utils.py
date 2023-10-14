@@ -227,7 +227,6 @@ class Check_GPU:
         while not self.stop:
             cur_time = time.time()
             exec_time = cur_time - prev_time
-            print(exec_time)
             # kW * (second / 3600) -> kWh
             self.iter_energy_usage += self.get_gpu_usage() * (exec_time / 3600.0)
             
