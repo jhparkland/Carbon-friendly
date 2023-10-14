@@ -59,7 +59,7 @@ class Check_GPU:
 
         # measurement data dataframe
         try:
-            self.df = pd.read_csv('measurement.csv')
+            self.df = pd.read_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv')
         except Exception:
             self.df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
 
@@ -170,10 +170,12 @@ class Check_GPU:
     def reset_gpu_core_clock(self):
         try:
             # reset command of gpu core clock
-            command = f"nvidia-smi --reset-gpu-clocks"
+            command = f"nvidia-smi -i {self.gpu_id} --reset-gpu-clocks"
 
             # nvidia-smi command execute
             subprocess.run(command, shell=True, check=True)
+
+            time.sleep(1000)
             cur_clock = self.get_gpu_freq_info()
 
             print(f"Core Clock reset to {cur_clock['CoreClock']} MHz ")
@@ -220,11 +222,12 @@ class Check_GPU:
         # self.opt_core_freq = 0
         self.stop = False
         
-        prev_time = 0
+        prev_time = time.time()
         # 1 while := 0.015s
         while not self.stop:
             cur_time = time.time()
             exec_time = cur_time - prev_time
+            print(exec_time)
             # kW * (second / 3600) -> kWh
             self.iter_energy_usage += self.get_gpu_usage() * (exec_time / 3600.0)
             
@@ -267,6 +270,6 @@ class Check_GPU:
         self.df.loc[self.df.index.max() + 1] = row
 
     def save_csv(self):
-        self.df.to_csv('measurement.csv', index=False)
-        print('measurement saved into measurement.csv ...')
+        self.df.to_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv', index=False)
+        print(f'measurement saved into {int(self.under_volting_rate * 100)}_measurement.csv ...')
 
