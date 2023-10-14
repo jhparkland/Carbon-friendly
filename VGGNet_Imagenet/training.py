@@ -3,13 +3,11 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.nn.functional as F
-import json
 import scipy
 from tqdm import tqdm 
 
 from vggmodel import VGGNet
 import torch.optim as optim
-import subprocess
 
 import sys
 import os
@@ -21,15 +19,10 @@ import multiprocessing
 from multiprocessing.managers import BaseManager
 
 class MyManager(BaseManager):   pass
-
 MyManager.register('Check_GPU', gpu_utils.Check_GPU)
+
 # GPU info measurement modules
 manager = MyManager()
-manager.start()
-
-gpu_measure = manager.Check_GPU()
-
-
 
 
 
@@ -75,15 +68,7 @@ def train():
     param = list(net.parameters())
 
     criterion = nn.CrossEntropyLoss().cuda()
-    optimizer = optim.Adam(net.parameters(),lr=0.00001)
-
-    idx2label = []
-    cls2label = {}
-
-    # with open("imagenet_class_index.json", "r") as read_file:
-    #     class_idx = json.load(read_file)
-    #     idx2label = [class_idx[str(k)][1] for k in range(len(class_idx))]
-    #     cls2label = {class_idx[str(k)][0]: class_idx[str(k)][1] for k in range(len(class_idx))}
+    optimizer = optim.Adam(net.parameters(), lr=0.00001)
 
 
     print('training start')
@@ -102,6 +87,7 @@ def train():
             iter_measurement_start = multiprocessing.Process(target=gpu_measure.iter_start, args=(epoch, i, trainloader.batch_size))
             iter_measurement_start.start()
 
+            # # for optimizing core frequency
             # setting_clock = multiprocessing.Process(target=gpu_measure.set_gpu_core_clock, args=(optimzied_core_clock,))
             # setting_clock.start()
 
@@ -120,8 +106,17 @@ def train():
                 print(loss.item())
                 for param in net.parameters():
                     print(param.data)
+
+            
             # print statistics
             running_loss += loss.item()
+            
+            torch.cuda.synchronize()
+
+            # # iter gpu measurement & log save
+            iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
+            iter_measurement_end.start()
+            
             if i % 2000 == 1999:    # print every 2000 mini-batches
                 print('%d epoch, %5d iter | loss: %.3f' %
                     (epoch + 1, i + 1, running_loss / 2000))
@@ -130,13 +125,10 @@ def train():
                 # save gpu measurement result
                 measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
                 measure_save.start()
+                measure_save.join()
 
             i += 1
-            torch.cuda.synchronize()
-
-            # # iter gpu measurement & log save
-            iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
-            iter_measurement_end.start()
+            
 
         save_path="ILSVRC_VGGNet/Experiment/exp/" + epoch + "_model_states.pth"
         torch.save(net.state_dict(), save_path)
@@ -174,13 +166,16 @@ def train():
 
 
 if __name__ == '__main__':
+    # # if error occurred in Windows
+    multiprocessing.freeze_support()
+    manager.start()
+    gpu_measure = manager.Check_GPU()
     try:
         # training start
         train()
-    
+        
     # for setting gpu's default frequency when terminated training.py process by KeyboardInterrupt
     except KeyboardInterrupt:
+        gpu_measure.stop = True
         gpu_measure.reset_gpu_core_clock()
         sys.exit()
-
-
