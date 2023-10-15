@@ -59,8 +59,10 @@ class Check_GPU:
 
         # measurement data dataframe
         try:
+            print(f'Reading {int(self.under_volting_rate * 100)}_measurement.csv')
             self.df = pd.read_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv')
         except Exception:
+            print(f"!!!!!!!!! Cannot Read {int(self.under_volting_rate * 100)}_measurement.csv !!!!!!!!!!!!!!!!!!!! ")
             self.df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
 
 
@@ -270,5 +272,6 @@ class Check_GPU:
 
     def save_csv(self):
         self.df.to_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv', index=False)
+        print(self.df.tail(10))
         print(f'measurement saved into {int(self.under_volting_rate * 100)}_measurement.csv ...')
 
