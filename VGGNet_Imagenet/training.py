@@ -72,7 +72,7 @@ def train():
 
 
     print('training start')
-    for epoch in range(3):  # loop over the dataset multiple times
+    for epoch in range(1):  # loop over the dataset multiple times
         running_loss = 0.0
 
         if(epoch>0):
