@@ -17,12 +17,10 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import gpu_utils
 import multiprocessing
 from multiprocessing.managers import BaseManager
-
+# # if error occurred in Windows
+torch.multiprocessing.freeze_support()
 class MyManager(BaseManager):   pass
 MyManager.register('Check_GPU', gpu_utils.Check_GPU)
-
-# GPU info measurement modules
-manager = MyManager()
 
 
 
@@ -76,10 +74,10 @@ def train(start_i_idx):
     for epoch in range(1):  # loop over the dataset multiple times
         running_loss = 0.0
 
-        if(epoch>0):
+        if start_i_idx > 0:
             net = VGGNet()
-            save_path="Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
-            net.load_state_dict(torch.load(save_path))
+            model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
+            net.load_state_dict(torch.load(model_path))
             net.to(device)
 
         i = 1
@@ -120,16 +118,17 @@ def train(start_i_idx):
                 iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
                 iter_measurement_end.start()
                 
-                if i % 100 == 0:    # print every 100 iteration
+                if i % 5 == 0:    # print every 100 iteration
                     print('%d epoch, %5d iter | loss: %.3f' %
                         (epoch + 1, i + 1, running_loss / 2000))
                     running_loss = 0.0
 
+                    
+                    model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
+                    torch.save(net.state_dict(), model_path)
+                    
                     # save i'th iter model states
-                    print(f'{i} iter model saved at', save_path, '...')
-                    save_path="Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
-                    torch.save(net.state_dict(), save_path)
-
+                    print(f'{i} iter model saved at', model_path, '...')
 
                     # save gpu measurement result
                     measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
@@ -170,16 +169,16 @@ def train(start_i_idx):
 
 
 if __name__ == '__main__':
-    # Experiment condition
-    voltage_rate = 1.0
-
-    # # if error occurred in Windows
-    multiprocessing.freeze_support()
+    # GPU info measurement modules
+    manager = MyManager()
     manager.start()
     gpu_measure = manager.Check_GPU()
+
+    # Experiment condition
+    voltage_rate = 1.0
     
     start_i_idx = 0
-    root_dir = 'Experiment/exp' + str(int(voltage_rate * 100))
+    root_dir = 'VGGNet_Imagenet/Experiment/exp' + str(int(voltage_rate * 100))
     os.makedirs(root_dir, exist_ok=True)
     for (root, dirs, files) in os.walk(root_dir):
         if len(files) > 0:
@@ -193,7 +192,8 @@ if __name__ == '__main__':
         train(start_i_idx)
         
     # for setting gpu's default frequency when terminated training.py process by KeyboardInterrupt
-    except KeyboardInterrupt:
+    except Exception:
         gpu_measure.stop = True
         gpu_measure.reset_gpu_core_clock()
+        manager.close()
         sys.exit()

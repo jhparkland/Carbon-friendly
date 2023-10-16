@@ -265,7 +265,7 @@ class Check_GPU:
         # print dictionary data of iteration
         print(f"iter measurement:{row}")
 
-        self.cur_df.loc[self.cur_df.index.max() + 1] = row
+        self.cur_df.loc[len(self.cur_df) + 1] = row
 
     def save_csv(self):
         # append measurement to total csv
