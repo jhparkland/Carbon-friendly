@@ -39,9 +39,6 @@ class Check_GPU:
         # to change frequency
         self.cur_cfreq = self.cfreq_max * self.under_volting_rate
 
-        # setting frequency (not use optimization algorithm(L-BFGS))
-        self.cur_cfreq = self.set_gpu_core_clock(int(self.cur_cfreq))
-
         self.epoch = 0
         self.iter = 0
         self.batch_size = 0
@@ -56,7 +53,8 @@ class Check_GPU:
         if self.freq_minmax_info:
             print(self.freq_minmax_info)
         print('Default gpu freq :', self.get_gpu_freq_info())
-        print('Setting core frequency as', self.cur_cfreq, '...')
+        # setting frequency (not use optimization algorithm(L-BFGS))
+        self.cur_cfreq = self.set_gpu_core_clock(int(self.cur_cfreq))
 
         self.cur_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
 
@@ -150,13 +148,11 @@ class Check_GPU:
     def set_gpu_core_clock(self, core_clock_freq):
         try:
             # setting command for change gpu core clock
-            command = f"nvidia-smi -i {self.gpu_id} --lock-gpu-clocks={core_clock_freq}"
+            command = f"nvidia-smi -i {self.gpu_id} --lock-gpu-clocks={core_clock_freq},{core_clock_freq}"
 
             # nvidia-smi 명령 실행
             subprocess.run(command, shell=True, check=True)
             cur_clock = self.get_gpu_freq_info()
-
-            print(f"GPU {self.gpu_id}: Core Clock set to {cur_clock['CoreClock']} MHz")
 
             return cur_clock['CoreClock']
 
