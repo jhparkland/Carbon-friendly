@@ -73,7 +73,7 @@ def train(start_i_idx):
         running_loss = 0.0
 
         train_iter = iter(trainloader)
-        i = 1
+        
         if start_i_idx > 0:
             net = VGGNet()
             model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(start_i_idx) + "_iter_model_states.pth"
@@ -82,64 +82,63 @@ def train(start_i_idx):
             net.load_state_dict(state_dict)
             net.to(device)
             print(f'Load {start_i_idx}\'th iter model states ')
-            print('Loading dataloader for skip trained data. Please Wait.')
-            for _ in range(start_i_idx):
-                next(train_iter, None)
-            i = start_i_idx + 1
-        
+
+        i = 1
         # Iteration 
         for data in tqdm(train_iter, desc='Processing'):
-            # gpu measurement start of Iteration
-            iter_measurement_start = multiprocessing.Process(target=gpu_measure.iter_start, args=(epoch, i, trainloader.batch_size))
-            iter_measurement_start.start()
+            if i > start_i_idx:
+                # gpu measurement start of Iteration
+                iter_measurement_start = multiprocessing.Process(target=gpu_measure.iter_start, args=(epoch, i, trainloader.batch_size))
+                iter_measurement_start.start()
 
-            # # for optimizing core frequency
-            # setting_clock = multiprocessing.Process(target=gpu_measure.set_gpu_core_clock, args=(optimzied_core_clock,))
-            # setting_clock.start()
+                # # for optimizing core frequency
+                # setting_clock = multiprocessing.Process(target=gpu_measure.set_gpu_core_clock, args=(optimzied_core_clock,))
+                # setting_clock.start()
 
-            # get the inputs
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
-            # zero the parameter gradients
-            optimizer.zero_grad()
-            outputs,f = net(inputs)
-            loss = criterion(outputs, labels)
+                # get the inputs
+                inputs, labels = data
+                inputs, labels = inputs.to(device), labels.to(device)
+                # zero the parameter gradients
+                optimizer.zero_grad()
+                outputs,f = net(inputs)
+                loss = criterion(outputs, labels)
 
-            loss.backward()
-            optimizer.step()
+                loss.backward()
+                optimizer.step()
 
-            if(loss.item() > 1000):
-                print(loss.item())
-                for param in net.parameters():
-                    print(param.data)
-
-            
-            # print statistics
-            running_loss += loss.item()
-            
-            torch.cuda.synchronize()
-
-            # # iter gpu measurement & log save
-            iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
-            iter_measurement_end.start()
-            
-            if i % 100 == 0:    # print every 100 iteration
-                print('%d epoch, %5d iter | loss: %.3f' %
-                    (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+                if(loss.item() > 1000):
+                    print(loss.item())
+                    for param in net.parameters():
+                        print(param.data)
 
                 
-                model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
-                torch.save(net.state_dict(), model_path)
+                # print statistics
+                running_loss += loss.item()
                 
-                # save i'th iter model states
-                print(f'{i} iter model saved at', model_path, '...')
+                torch.cuda.synchronize()
 
-                # save gpu measurement result
-                measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
-                measure_save.start()
-                measure_save.join()
+                # # iter gpu measurement & log save
+                iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
+                iter_measurement_end.start()
+                
+                if i % 100 == 0:    # print every 100 iteration
+                    print('%d epoch, %5d iter | loss: %.3f' %
+                        (epoch + 1, i + 1, running_loss / 2000))
+                    running_loss = 0.0
+
+                    
+                    model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
+                    torch.save(net.state_dict(), model_path)
+                    
+                    # save i'th iter model states
+                    print(f'{i} iter model saved at', model_path, '...')
+
+                    # save gpu measurement result
+                    measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
+                    measure_save.start()
+                    measure_save.join()
             i += 1
+            
             
 
     print('Finished Training')
