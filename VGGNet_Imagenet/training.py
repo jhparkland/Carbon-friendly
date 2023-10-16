@@ -118,7 +118,7 @@ def train(start_i_idx):
                 iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
                 iter_measurement_end.start()
                 
-                if i % 5 == 0:    # print every 100 iteration
+                if i % 100 == 0:    # print every 100 iteration
                     print('%d epoch, %5d iter | loss: %.3f' %
                         (epoch + 1, i + 1, running_loss / 2000))
                     running_loss = 0.0
