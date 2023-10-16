@@ -11,12 +11,13 @@ class Check_GPU:
         self.under_volting_rate = 1.0
 
         # DL model name
-        self.dl_model = 'VGGNet_imagenet'
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.dl_model = 'VGGNet'
 
         # GPU device ID 
         self.gpu_id = 0
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
         # idle gpu power
         self.default_gpu_usage = None
@@ -57,12 +58,10 @@ class Check_GPU:
         print('Default gpu freq :', self.get_gpu_freq_info())
         print('Setting core frequency as', self.cur_cfreq, '...')
 
-        # measurement data dataframe
-        try:
-            self.df = pd.read_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv')
-        except Exception:
-            self.df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
+        self.cur_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
 
+
+        
 
     # GPU 전력 사용량 측정 함수
     def get_gpu_usage(self):
@@ -266,9 +265,22 @@ class Check_GPU:
         # print dictionary data of iteration
         print(f"iter measurement:{row}")
 
-        self.df.loc[self.df.index.max() + 1] = row
+        self.cur_df.loc[self.cur_df.index.max() + 1] = row
 
     def save_csv(self):
-        self.df.to_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv', index=False)
+        # append measurement to total csv
+        try:
+            total_df = pd.read_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv')
+        except Exception:
+            total_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
+        total_df = pd.concat([total_df, self.cur_df])
+
+        # save csv
+        total_df.to_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv', index=False)
+        print(total_df.tail(5))
         print(f'measurement saved into {int(self.under_volting_rate * 100)}_measurement.csv ...')
+
+        # for next save
+        total_df = None
+        self.cur_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
 
