@@ -27,7 +27,7 @@ manager = MyManager()
 
 
 
-def train():
+def train(start_i_idx):
     # For dataset preprocessing. Not for transformer model
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -52,7 +52,8 @@ def train():
     ## cuda setting
     # select device
     if torch.cuda.is_available():
-        device = torch.device('cuda')  
+        # gpu select
+        device = torch.device('cuda:0')  
         print('Using gpu device')
     else:
         device = torch.device('cpu')
@@ -71,70 +72,73 @@ def train():
     optimizer = optim.Adam(net.parameters(), lr=0.00001)
 
 
-    print('training start')
+    print(f'training start at {start_i_idx}th iter')
     for epoch in range(1):  # loop over the dataset multiple times
         running_loss = 0.0
 
         if(epoch>0):
             net = VGGNet()
+            save_path="Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
             net.load_state_dict(torch.load(save_path))
             net.to(device)
 
-        i = 0
+        i = 1
         # Iteration 
         for data in tqdm(trainloader, desc='Processing'):
-            # gpu measurement start of Iteration
-            iter_measurement_start = multiprocessing.Process(target=gpu_measure.iter_start, args=(epoch, i, trainloader.batch_size))
-            iter_measurement_start.start()
+            if i > start_i_idx:
+                # gpu measurement start of Iteration
+                iter_measurement_start = multiprocessing.Process(target=gpu_measure.iter_start, args=(epoch, i, trainloader.batch_size))
+                iter_measurement_start.start()
 
-            # # for optimizing core frequency
-            # setting_clock = multiprocessing.Process(target=gpu_measure.set_gpu_core_clock, args=(optimzied_core_clock,))
-            # setting_clock.start()
+                # # for optimizing core frequency
+                # setting_clock = multiprocessing.Process(target=gpu_measure.set_gpu_core_clock, args=(optimzied_core_clock,))
+                # setting_clock.start()
 
-            # get the inputs
-            inputs, labels = data
-            inputs, labels = inputs.to(device), labels.to(device)
-            # zero the parameter gradients
-            optimizer.zero_grad()
-            outputs,f = net(inputs)
-            loss = criterion(outputs, labels)
+                # get the inputs
+                inputs, labels = data
+                inputs, labels = inputs.to(device), labels.to(device)
+                # zero the parameter gradients
+                optimizer.zero_grad()
+                outputs,f = net(inputs)
+                loss = criterion(outputs, labels)
 
-            loss.backward()
-            optimizer.step()
+                loss.backward()
+                optimizer.step()
 
-            if(loss.item() > 1000):
-                print(loss.item())
-                for param in net.parameters():
-                    print(param.data)
+                if(loss.item() > 1000):
+                    print(loss.item())
+                    for param in net.parameters():
+                        print(param.data)
 
-            
-            # print statistics
-            running_loss += loss.item()
-            
-            torch.cuda.synchronize()
+                
+                # print statistics
+                running_loss += loss.item()
+                
+                torch.cuda.synchronize()
 
-            # # iter gpu measurement & log save
-            iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
-            iter_measurement_end.start()
-            
-            if i % 100 == 99:    # print every 100 iteration
-                print('%d epoch, %5d iter | loss: %.3f' %
-                    (epoch + 1, i + 1, running_loss / 2000))
-                running_loss = 0.0
+                # # iter gpu measurement & log save
+                iter_measurement_end = multiprocessing.Process(target=gpu_measure.iter_end, args=())
+                iter_measurement_end.start()
+                
+                if i % 100 == 0:    # print every 100 iteration
+                    print('%d epoch, %5d iter | loss: %.3f' %
+                        (epoch + 1, i + 1, running_loss / 2000))
+                    running_loss = 0.0
 
-                # save gpu measurement result
-                measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
-                measure_save.start()
-                measure_save.join()
+                    # save i'th iter model states
+                    print(f'{i} iter model saved at', save_path, '...')
+                    save_path="Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
+                    torch.save(net.state_dict(), save_path)
 
+
+                    # save gpu measurement result
+                    measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
+                    measure_save.start()
+                    measure_save.join()
+            else:
+                continue
             i += 1
             
-
-        save_path="ILSVRC_VGGNet/Experiment/exp/" + epoch + "_model_states.pth"
-        torch.save(net.state_dict(), save_path)
-        
-        print(f'{epoch}\'epoch model saved at', save_path, '...')
-        
 
     print('Finished Training')
     
@@ -166,13 +170,27 @@ def train():
 
 
 if __name__ == '__main__':
+    # Experiment condition
+    voltage_rate = 1.0
+
     # # if error occurred in Windows
     multiprocessing.freeze_support()
     manager.start()
     gpu_measure = manager.Check_GPU()
+    
+    start_i_idx = 0
+    root_dir = 'Experiment/exp' + str(int(voltage_rate * 100))
+    os.makedirs(root_dir, exist_ok=True)
+    for (root, dirs, files) in os.walk(root_dir):
+        if len(files) > 0:
+            model_list = [int(m.split(sep='_')[0]) for m in files]
+            start_i_idx = max(model_list)
+        else:
+            start_i_idx = 0
+
     try:
         # training start
-        train()
+        train(start_i_idx)
         
     # for setting gpu's default frequency when terminated training.py process by KeyboardInterrupt
     except KeyboardInterrupt:
