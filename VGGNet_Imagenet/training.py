@@ -1,4 +1,5 @@
 import torch
+from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
@@ -17,12 +18,10 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import gpu_utils
 import multiprocessing
 from multiprocessing.managers import BaseManager
-
+# # if error occurred in Windows
+torch.multiprocessing.freeze_support()
 class MyManager(BaseManager):   pass
 MyManager.register('Check_GPU', gpu_utils.Check_GPU)
-
-# GPU info measurement modules
-manager = MyManager()
 
 
 
@@ -34,17 +33,14 @@ def train(start_i_idx):
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
-
-
+    skip_idx = start_i_idx * 64
     # dataset load
     # !!!! Need to change dataset PATH!!!!!!!
-    print('train set load...')
     trainset = torchvision.datasets.ImageNet('D:/data', split='train', transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True)
-
-    print('valid set load...')
+    trainloader = DataLoader(trainset, batch_size=64, shuffle=False)
+    
     validset = torchvision.datasets.ImageNet('D:/data', split='val', transform=transform)
-    validloader = torch.utils.data.DataLoader(validset, batch_size=64, shuffle=False)
+    validloader = DataLoader(validset, batch_size=64, shuffle=False)
     # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
@@ -76,15 +72,20 @@ def train(start_i_idx):
     for epoch in range(1):  # loop over the dataset multiple times
         running_loss = 0.0
 
-        if(epoch>0):
+        train_iter = iter(trainloader)
+        
+        if start_i_idx > 0:
             net = VGGNet()
-            save_path="Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
-            net.load_state_dict(torch.load(save_path))
+            model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(start_i_idx) + "_iter_model_states.pth"
+            state_dict = torch.load(model_path)
+            # state_dict = {key.replace("module.", ""): value for key, value in state_dict.items()}
+            net.load_state_dict(state_dict)
             net.to(device)
+            print(f'Load {start_i_idx}\'th iter model states ')
 
         i = 1
         # Iteration 
-        for data in tqdm(trainloader, desc='Processing'):
+        for data in tqdm(train_iter, desc='Processing'):
             if i > start_i_idx:
                 # gpu measurement start of Iteration
                 iter_measurement_start = multiprocessing.Process(target=gpu_measure.iter_start, args=(epoch, i, trainloader.batch_size))
@@ -125,19 +126,19 @@ def train(start_i_idx):
                         (epoch + 1, i + 1, running_loss / 2000))
                     running_loss = 0.0
 
+                    
+                    model_path="VGGNet_Imagenet/Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
+                    torch.save(net.state_dict(), model_path)
+                    
                     # save i'th iter model states
-                    print(f'{i} iter model saved at', save_path, '...')
-                    save_path="Experiment/exp" + str(int(voltage_rate * 100)) + "/" + str(i) + "_iter_model_states.pth"
-                    torch.save(net.state_dict(), save_path)
-
+                    print(f'{i} iter model saved at', model_path, '...')
 
                     # save gpu measurement result
                     measure_save = multiprocessing.Process(target=gpu_measure.save_csv, args=())
                     measure_save.start()
                     measure_save.join()
-            else:
-                continue
             i += 1
+            
             
 
     print('Finished Training')
@@ -170,16 +171,16 @@ def train(start_i_idx):
 
 
 if __name__ == '__main__':
-    # Experiment condition
-    voltage_rate = 1.0
-
-    # # if error occurred in Windows
-    multiprocessing.freeze_support()
+    # GPU info measurement modules
+    manager = MyManager()
     manager.start()
     gpu_measure = manager.Check_GPU()
+
+    # Experiment condition
+    voltage_rate = 1.0
     
     start_i_idx = 0
-    root_dir = 'Experiment/exp' + str(int(voltage_rate * 100))
+    root_dir = 'VGGNet_Imagenet/Experiment/exp' + str(int(voltage_rate * 100))
     os.makedirs(root_dir, exist_ok=True)
     for (root, dirs, files) in os.walk(root_dir):
         if len(files) > 0:
@@ -193,7 +194,8 @@ if __name__ == '__main__':
         train(start_i_idx)
         
     # for setting gpu's default frequency when terminated training.py process by KeyboardInterrupt
-    except KeyboardInterrupt:
+    except Exception:
         gpu_measure.stop = True
         gpu_measure.reset_gpu_core_clock()
+        manager.close()
         sys.exit()
