@@ -76,7 +76,7 @@ class Check_GPU:
     def get_gpu_info(self):
         try:
             # nvidia-smi 명령 실행
-            command = "nvidia-smi --query-gpu=name,memory.total --format=csv,noheader,nounits"
+            command = f"nvidia-smi -i {self.gpu_id} --query-gpu=name,memory.total --format=csv,noheader,nounits"
             result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # 결과 파싱
@@ -98,7 +98,7 @@ class Check_GPU:
     def get_min_max_freq_info(self):
         try:
             # "nvidia-smi -q -d SUPPORTED_CLOCKS" 명령 실행
-            command = "nvidia-smi -q -d SUPPORTED_CLOCKS"
+            command = f"nvidia-smi -i {self.gpu_id} -q -d SUPPORTED_CLOCKS"
             result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # 결과 문자열에서 "Graphics" 주파수 정보 추출
@@ -140,6 +140,10 @@ class Check_GPU:
     # set {gpu_index} gpu's core clock to {core_clock_freq}
     def set_gpu_core_clock(self, core_clock_freq):
         try:
+            # persistent mode on
+            command = f"nvidia-smi -i {self.gpu_id} -pm=1"
+            subprocess.run(command, shell=True, check=True)
+
             # setting command for change gpu core clock
             command = f"nvidia-smi -i {self.gpu_id} --lock-gpu-clocks={core_clock_freq},{core_clock_freq}"
 

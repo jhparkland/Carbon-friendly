@@ -180,17 +180,19 @@ if __name__ == '__main__':
     # Experiment condition setting
     voltage_rate = 1.0
     gpu_id = 0
+    model_name = 'VGGNet'
+    is_train_from_first = True
     ###################################################
 
     start_i_idx = 0
     root_dir = 'VGGNet_Imagenet/Experiment/exp' + str(int(voltage_rate * 100))
-    model_name = root_dir.split('/')[0]
+    
 
     gpu_measure = manager.Check_GPU(model_name, gpu_id, voltage_rate)
 
     os.makedirs(root_dir, exist_ok=True)
     for (root, dirs, files) in os.walk(root_dir):
-        if len(files) > 0:
+        if len(files) > 0 and not is_train_from_first:
             model_list = [int(m.split(sep='_')[0]) for m in files]
             start_i_idx = max(model_list)
         else:
