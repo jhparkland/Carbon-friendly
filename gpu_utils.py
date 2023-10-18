@@ -4,19 +4,13 @@ import pandas as pd
 
 
 class Check_GPU:
-    def __init__(self) -> None:
-        # !!!!!!!!!!! Need to Change !!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # undervolting clock rate
-        self.under_volting_rate = 1.0
-
+    def __init__(self, model_name, gpu_id, voltage_rate) -> None:
         # DL model name
-        self.dl_model = 'VGGNet'
-
+        self.dl_model = model_name
         # GPU device ID 
-        self.gpu_id = 0
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        self.gpu_id = gpu_id
+        # undervolting clock rate
+        self.under_volting_rate = voltage_rate
 
 
         # idle gpu power
@@ -57,7 +51,6 @@ class Check_GPU:
         self.cur_cfreq = self.set_gpu_core_clock(int(self.cur_cfreq))
 
         self.cur_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
-
 
         
 
@@ -187,7 +180,7 @@ class Check_GPU:
     def get_gpu_freq_info(self):
         try:
             # Getting GPU info by nvidia-smi query
-            command = "nvidia-smi --query-gpu=clocks.current.memory,clocks.current.graphics --format=csv,noheader,nounits"
+            command = f"nvidia-smi -i {self.gpu_id} --query-gpu=clocks.current.memory,clocks.current.graphics --format=csv,noheader,nounits"
             result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # 결과 파싱

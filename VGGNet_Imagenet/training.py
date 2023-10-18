@@ -22,6 +22,7 @@ from multiprocessing.managers import BaseManager
 torch.multiprocessing.freeze_support()
 class MyManager(BaseManager):   pass
 MyManager.register('Check_GPU', gpu_utils.Check_GPU)
+global gpu_id
 
 
 
@@ -33,7 +34,6 @@ def train(start_i_idx):
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
-    skip_idx = start_i_idx * 64
     # dataset load
     # !!!! Need to change dataset PATH!!!!!!!
     trainset = torchvision.datasets.ImageNet('D:/data', split='train', transform=transform)
@@ -49,7 +49,7 @@ def train(start_i_idx):
     # select device
     if torch.cuda.is_available():
         # gpu select
-        device = torch.device('cuda:0')  
+        device = torch.device(f'cuda:{gpu_id}')  
         print('Using gpu device')
     else:
         device = torch.device('cpu')
@@ -174,13 +174,20 @@ if __name__ == '__main__':
     # GPU info measurement modules
     manager = MyManager()
     manager.start()
-    gpu_measure = manager.Check_GPU()
-
-    # Experiment condition
-    voltage_rate = 1.0
     
+    
+    ###################################################
+    # Experiment condition setting
+    voltage_rate = 1.0
+    gpu_id = 0
+    ###################################################
+
     start_i_idx = 0
     root_dir = 'VGGNet_Imagenet/Experiment/exp' + str(int(voltage_rate * 100))
+    model_name = root_dir.split('/')[0]
+
+    gpu_measure = manager.Check_GPU(model_name, gpu_id, voltage_rate)
+
     os.makedirs(root_dir, exist_ok=True)
     for (root, dirs, files) in os.walk(root_dir):
         if len(files) > 0:
@@ -188,6 +195,7 @@ if __name__ == '__main__':
             start_i_idx = max(model_list)
         else:
             start_i_idx = 0
+
 
     try:
         # training start
@@ -197,5 +205,4 @@ if __name__ == '__main__':
     except Exception:
         gpu_measure.stop = True
         gpu_measure.reset_gpu_core_clock()
-        manager.close()
         sys.exit()
