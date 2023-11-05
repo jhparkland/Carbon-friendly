@@ -1,6 +1,8 @@
 import time
 import subprocess
 import pandas as pd
+import os
+import pyrebase
 
 
 class Check_GPU:
@@ -51,17 +53,34 @@ class Check_GPU:
         self.cur_cfreq = self.set_gpu_core_clock(int(self.cur_cfreq))
 
         self.cur_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
+        os.makedirs(f'/data/home/dsl2023/Carbon-friendly/VGGNet_Imagenet/Experiment/exp{int(self.under_volting_rate*100)}', exist_ok=True)
+
+        # firebase config
+        config = {
+            "apiKey": "AIzaSyCIhOSHqDgjbe9LU2x45xByd8g4Y2P18HM",
+            "authDomain": "carbon-friendly-402901.firebaseapp.com",
+            "databaseURL": "https://carbon-friendly-402901-default-rtdb.firebaseio.com",
+            "projectId": "carbon-friendly-402901",
+            "storageBucket": "carbon-friendly-402901.appspot.com",
+            "messagingSenderId": "982587361472",
+            "appId": "1:982587361472:web:3c7e267e476bad79674525"
+        }
+
+        # Pyrebase initialization
+        firebase = pyrebase.initialize_app(config)
+
+        self.db = firebase.database()
 
         
 
     # GPU 전력 사용량 측정 함수
     def get_gpu_usage(self):
-        # nvidia-smi command
-        command = f"nvidia-smi --id {self.gpu_id} --query-gpu=power.draw --format=csv,noheader,nounits"
+        # sudo nvidia-smi command
+        command = f"sudo nvidia-smi --id {self.gpu_id} --query-gpu=power.draw --format=csv,noheader,nounits"
         result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
         # result parsing
-        power_draw = float(result.strip()) / 1000.0  # Convert to kW
+        power_draw = float(result.strip())  # Convert to kW
 
         if self.default_gpu_usage is not None:
             power_draw -= self.default_gpu_usage
@@ -75,8 +94,8 @@ class Check_GPU:
     # GPU 이름 가져오기
     def get_gpu_info(self):
         try:
-            # nvidia-smi 명령 실행
-            command = f"nvidia-smi -i {self.gpu_id} --query-gpu=name,memory.total --format=csv,noheader,nounits"
+            # sudo nvidia-smi 명령 실행
+            command = f"sudo nvidia-smi -i {self.gpu_id} --query-gpu=name,memory.total --format=csv,noheader,nounits"
             result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # 결과 파싱
@@ -97,8 +116,8 @@ class Check_GPU:
     # GPU 최소, 최대 주파수 정보 가져오기
     def get_min_max_freq_info(self):
         try:
-            # "nvidia-smi -q -d SUPPORTED_CLOCKS" 명령 실행
-            command = f"nvidia-smi -i {self.gpu_id} -q -d SUPPORTED_CLOCKS"
+            # "sudo nvidia-smi -q -d SUPPORTED_CLOCKS" 명령 실행
+            command = f"sudo nvidia-smi -i {self.gpu_id} -q -d SUPPORTED_CLOCKS"
             result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # 결과 문자열에서 "Graphics" 주파수 정보 추출
@@ -141,13 +160,12 @@ class Check_GPU:
     def set_gpu_core_clock(self, core_clock_freq):
         try:
             # persistent mode on
-            command = f"nvidia-smi -i {self.gpu_id} -pm=1"
+            command = f"sudo nvidia-smi -i {self.gpu_id} -pm=1"
             subprocess.run(command, shell=True, check=True)
 
             # setting command for change gpu core clock
-            command = f"nvidia-smi -i {self.gpu_id} --lock-gpu-clocks={core_clock_freq},{core_clock_freq}"
-
-            # nvidia-smi 명령 실행
+            command = f"sudo nvidia-smi -i {self.gpu_id} --lock-gpu-clocks={core_clock_freq},{core_clock_freq}"
+            # sudo nvidia-smi 명령 실행
             subprocess.run(command, shell=True, check=True)
             cur_clock = self.get_gpu_freq_info()
 
@@ -162,9 +180,9 @@ class Check_GPU:
     def reset_gpu_core_clock(self):
         try:
             # reset command of gpu core clock
-            command = f"nvidia-smi -i {self.gpu_id} --reset-gpu-clocks"
+            command = f"sudo nvidia-smi -i {self.gpu_id} --reset-gpu-clocks"
 
-            # nvidia-smi command execute
+            # sudo nvidia-smi command execute
             subprocess.run(command, shell=True, check=True)
 
             time.sleep(1000)
@@ -183,8 +201,8 @@ class Check_GPU:
     # 현재 gpu 주파수 측정
     def get_gpu_freq_info(self):
         try:
-            # Getting GPU info by nvidia-smi query
-            command = f"nvidia-smi -i {self.gpu_id} --query-gpu=clocks.current.memory,clocks.current.graphics --format=csv,noheader,nounits"
+            # Getting GPU info by sudo nvidia-smi query
+            command = f"sudo nvidia-smi -i {self.gpu_id} --query-gpu=clocks.current.memory,clocks.current.graphics --format=csv,noheader,nounits"
             result = subprocess.check_output(command, shell=True, universal_newlines=True)
 
             # 결과 파싱
@@ -219,7 +237,7 @@ class Check_GPU:
         while not self.stop:
             cur_time = time.time()
             exec_time = cur_time - prev_time
-            # kW * (second / 3600) -> kWh
+            # W * (second / 3600) -> kWh
             self.iter_energy_usage += self.get_gpu_usage() * (exec_time / 3600.0)
             
             prev_time = cur_time
@@ -237,8 +255,8 @@ class Check_GPU:
         self.iter_execution_time = time.time() - self.iter_execution_time
         self.total_excution_time += self.iter_execution_time
         self.total_energy_usage += self.iter_energy_usage
-        freq_info = self.get_gpu_freq_info()
-        self.core_freq = max(self.core_freq, freq_info['CoreClock'])
+        # freq_info = self.get_gpu_freq_info()
+        # self.core_freq = max(self.core_freq, freq_info['CoreClock'])
 
         row = {'DeviceID': self.device_info['GPU Name'],
             'DLmodel': self.dl_model,
@@ -249,29 +267,37 @@ class Check_GPU:
             'Energy': self.iter_energy_usage,
             'ExecutionTimePerData': self.iter_execution_time / self.batch_size,
             'EnergyPerData': self.iter_energy_usage / self.batch_size,
-            'CoreFreq': self.core_freq,
+            'CoreFreq': self.cur_cfreq,
             'TotalExecutionTime': self.total_excution_time,
             'TotalEnergy': self.total_energy_usage,
             # 아직 최적화 알고리즘 구현 X
             'OtimalCoreFreq':None}
         
+        db_data = {
+            'coreFreq' : self.core_freq,
+            'executionTime': self.iter_execution_time,
+            'energyUsage' : self.iter_energy_usage
+        }
+
+        self.db.child('optim').set(db_data)
+
         # print dictionary data of iteration
-        print(f"iter measurement:{row}")
+        # print(f"iter measurement:{row}")
 
         self.cur_df.loc[len(self.cur_df) + 1] = row
 
     def save_csv(self):
         # append measurement to total csv
+        save_path = f"/data/home/dsl2023/Carbon-friendly/VGGNet_Imagenet/Experiment/exp{int(self.under_volting_rate * 100)}/{int(self.under_volting_rate * 100)}_measurement.csv"
         try:
-            total_df = pd.read_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv')
+            total_df = pd.read_csv(save_path)
         except Exception:
             total_df = pd.DataFrame(columns=['DeviceID', 'DLmodel', 'TimeStamp', 'EpcohIdx', 'IterIdx', 'ExecutionTime', 'Energy', 'ExecutionTimePerData', 'EnergyPerData', 'CoreFreq', 'OtimalCoreFreq'])
         total_df = pd.concat([total_df, self.cur_df])
 
         # save csv
-        total_df.to_csv(f'{int(self.under_volting_rate * 100)}_measurement.csv', index=False)
-        print(total_df.tail(5))
-        print(f'measurement saved into {int(self.under_volting_rate * 100)}_measurement.csv ...')
+        total_df.to_csv(save_path, index=False)
+        print(f'measurement saved into ', save_path)
 
         # for next save
         total_df = None
