@@ -1,6 +1,3 @@
-# learning-passage
-The process involves measuring the carbon emissions generated from deep learning training. If a server's training process produces high carbon emissions, we transfer the workload to servers with lower carbon emissions. Ultimately, this method aims to achieve a carbon net-zero state.
-
 # 탄소 친화적 딥러닝 워크로드를 위한 시공간 이동 및 최적화 SW
 팀 명 (팀원) : Carbon Watch (박정현, 김대로, 공지환, 이수원, 김채은)
 
