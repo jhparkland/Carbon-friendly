@@ -20,3 +20,4 @@
 ## 3. 웹 사이트 이미지
 
 ![image](https://github.com/jhparkland/learning-passage/assets/86312443/a1afabc7-c56a-4c7e-87b5-deb7c0184556)
+
