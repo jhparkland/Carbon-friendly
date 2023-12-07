@@ -21,3 +21,6 @@
 
 ![image](https://github.com/jhparkland/learning-passage/assets/86312443/a1afabc7-c56a-4c7e-87b5-deb7c0184556)
 
+### 성과
+
+동아대학교 컴퓨터AI공학부 졸업작품 전시회(FairDay) 최우수 수상 작품
