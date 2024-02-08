@@ -1,5 +1,5 @@
 # 탄소 친화적 딥러닝 워크로드를 위한 시공간 이동 및 최적화 SW
-팀 명 (팀원) : Carbon Watch ([박정현](https://github.com/jhparkland), [김대로](https://github.com/dhfgoeofh), [공지환](https://github.com/izgnok), [이수원](https://github.com/Su1226), 김채은)
+팀 명 (팀원) : Carbon Watch ([박정현](https://github.com/jhparkland), [김대로](https://github.com/dhfgoeofh), [공지환](https://github.com/izgnok))
 
 ## 1. 프로젝트 소개
 인공지능 컴퓨팅 산업의 급격하게 성장하면서 GPU 사용으로 인한 전력 소모량이 큰 폭으로 증가하였습니다.  
