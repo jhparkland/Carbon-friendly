@@ -19,7 +19,11 @@
 
 ## 3. 웹 사이트 이미지
 
-![image]()
+<div align='center'>
+  
+![image](https://github.com/jhparkland/Carbon-friendly/blob/main/image01.png)
+
+</div>
 
 ### 성과
 
