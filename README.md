@@ -6,6 +6,7 @@
 <div align='center'>
   
   ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/intro.png)
+  ##### 그림. 1 프로젝트 수행 배경 및 관련 연구 개요
   
 </div>
 인공지능 컴퓨팅 산업의 급격하게 성장하면서 GPU 사용으로 인한 전력 소모량이 큰 폭으로 증가하였습니다.  
@@ -14,7 +15,15 @@
 국가별 전력생산원의 차이 시간에 따른 재생에너지 발전량 등과 딥러닝의 반복적인 훈련 과정을 이용해 우리는 학습 프로세스를 시공간적으로 이동시킵니다.  
 또한, GPU의 주파수를 제안하여 성능에 영향을 크게 미치지 않으며, 탄소 배출을 최소화하는 종합적인 방법을 제안합니다.
 
-## 2. 사용된 기술
+## 2. 분산된 클라우드에서 딥러닝 워크로드의 탄소 인지 이동 및 전력 최적화 기술
+<div align='center'>
+  
+  ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/method.png)
+  ##### 그림. 2 제안하는 기술의 개념도
+  
+</div>
+
+## 3. 사용된 기술
 
 <div align='center'>
 
