@@ -43,15 +43,6 @@
 - **DVFS** : 동적으로 GPU 전압과 주파수를 조절하여, 성능과 전력 소모를 함께 조절하는 기술.
 - **L-BFGS** : 주파수를 최적화하기 위한 알고리즘으로 사용.
 
-## 3. 웹 사이트 이미지
-
-<div align='center'>
-  
-![image](https://github.com/jhparkland/Carbon-friendly/blob/main/image01.png)
-##### 그림. 4 실시간 클라우드의 탄소 배출량 모니터링 SW 메인 패널
-
-</div>
-
 ### 성과
 
 - 동아대학교 컴퓨터AI공학부 졸업작품 전시회(FairDay) 최우수 수상 작품. 
