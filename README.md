@@ -1,5 +1,5 @@
 # 탄소 친화적 딥러닝 워크로드를 위한 시공간 이동 및 최적화 SW
-팀 명 (팀원) : Carbon Watch ([박정현](https://github.com/jhparkland), [김대로](https://github.com/dhfgoeofh), [공지환](https://github.com/izgnok))
+팀 명 (팀원) : Carbon Watch ([박정현](https://github.com/jhparkland), [김대로](https://github.com/dhfgoeofh))
 
 ## 1. 프로젝트 소개
 인공지능 컴퓨팅 산업의 급격하게 성장하면서 GPU 사용으로 인한 전력 소모량이 큰 폭으로 증가하였습니다.  
@@ -19,7 +19,7 @@
 
 ## 3. 웹 사이트 이미지
 
-![image](https://github.com/jhparkland/learning-passage/assets/86312443/a1afabc7-c56a-4c7e-87b5-deb7c0184556)
+![image]()
 
 ### 성과
 
