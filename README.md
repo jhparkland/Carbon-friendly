@@ -3,9 +3,7 @@
 
 ## 1. 프로젝트 소개
 
-
-  
-  ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/intro.png)
+![image](https://github.com/jhparkland/Carbon-friendly/assets/86312443/9ff879f6-38ee-49bd-acc3-ef97cbcc86b4)
   ##### 그림. 1 프로젝트 수행 배경 및 관련 연구 개요
 
 
@@ -33,7 +31,8 @@
 ## 2. 분산된 클라우드에서 딥러닝 워크로드의 탄소 인지 이동 및 전력 최적화 기술
 
   
-  ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/method.png)
+![image](https://github.com/jhparkland/Carbon-friendly/assets/86312443/c5f5ca1f-3970-4afb-a95e-df8a01327e2a)
+
   ##### 그림. 2 제안하는 기술의 개념도
   
 
@@ -46,10 +45,12 @@ CAFTM은 스케일링, 관용, 중지, 마이그레이션의 네 가지 절차�
 
 
 
-  ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/migration.png)
+![image](https://github.com/jhparkland/Carbon-friendly/assets/86312443/adb19c1c-2138-40d9-b21e-81688fd44c0e)
+
   ##### 그림. 2 분산된 클라우드에서 딥러닝 워크로드의 탄소 인지형 이동 기술 
 
-  ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/gpu.png)
+ ![image](https://github.com/jhparkland/Carbon-friendly/assets/86312443/5bebfa08-3a1b-4fe3-960c-68b5b9d13e9f)
+
   ##### 그림. 3 전력 소비량 최소화를 위한 GPU 주파수 최적화 기술
   
 
@@ -69,7 +70,7 @@ CAFTM은 스케일링, 관용, 중지, 마이그레이션의 네 가지 절차�
 - GPU 자원 관리 인터페이스를 활용하여 최적 주파수를 GPU에 적용하고, 스케일링 상태에서 관용 상태로 전환한다.
 
 ## 4. 결과
-![image](https://github.com/jhparkland/Carbon-friendly/assets/86312443/6ddf9cd1-1331-4119-8f62-ae8cd8bce969)
+![image](https://github.com/jhparkland/Carbon-friendly/assets/86312443/f7bfcfbe-6036-4a64-a11c-f2b7f73b61a2)
 
 
 ## 5. 성과
