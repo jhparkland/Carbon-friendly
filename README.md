@@ -3,12 +3,11 @@
 
 ## 1. 프로젝트 소개
 
-<div align='center'>
+
   
   ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/intro.png)
   ##### 그림. 1 프로젝트 수행 배경 및 관련 연구 개요
-  
-</div>
+
 
 #### 배경
 ##### LLMs과 같은 대규모 딥러닝으로 워크로드로부터 발생하는 방대한 탄소 배출량의 절감이 시급함:  
@@ -32,12 +31,12 @@
 
 
 ## 2. 분산된 클라우드에서 딥러닝 워크로드의 탄소 인지 이동 및 전력 최적화 기술
-<div align='center'>
+
   
   ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/method.png)
   ##### 그림. 2 제안하는 기술의 개념도
   
-</div>
+
 
 CAFTM은 스케일링, 관용, 중지, 마이그레이션의 네 가지 절차적 상태를 통해 작동한다.  
 스케일링 상태에서 관용 상태로의 전환이 반복적으로 작동하여 탄소 강도가 임계점 이하로 유지되는 동시에 GPU 전력 소비를 최적화 한다.  
@@ -45,7 +44,7 @@ CAFTM은 스케일링, 관용, 중지, 마이그레이션의 네 가지 절차�
 
 ## 3. 사용된 기술
 
-<div align='center'>
+
 
   ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/migration.png)
   ##### 그림. 2 분산된 클라우드에서 딥러닝 워크로드의 탄소 인지형 이동 기술 
@@ -53,7 +52,7 @@ CAFTM은 스케일링, 관용, 중지, 마이그레이션의 네 가지 절차�
   ![image](https://github.com/jhparkland/Carbon-friendly/blob/main/gpu.png)
   ##### 그림. 3 전력 소비량 최소화를 위한 GPU 주파수 최적화 기술
   
-</div>
+
 
 그림. 2는 탄소를 고려한 안정적인 마이그레이션 방법에 대하여 나타낸다. 
 - 대한민국에 위치한 클라우드에서 06시에 딥러닝 학습을 시작한다. 
